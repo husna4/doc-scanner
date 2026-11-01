@@ -1,0 +1,19 @@
+.venv/
+.python/
+.cache/
+.runtime/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.coverage
+htmlcov/
+test-results/
+.env
+
+# Seguimiento e instrucciones locales
+/PLAN.md
+/AGENTS.md
+/.agents/
+/.codex/

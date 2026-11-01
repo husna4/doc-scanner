@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DocScanner · Tu papel, en limpio</title>
+  <link rel="icon" href="/static/favicon.svg"><link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><img src="/static/favicon.svg" width="38" height="38" alt=""><span>DocScanner<small>ESTUDIO DE DOCUMENTOS</small></span></a>
+    <div class="header-right"><span class="local-badge"><i></i> Solo en tu equipo</span><a href="/docs" target="_blank" rel="noopener">API ↗</a></div>
+  </header>
+  <main>
+    <section class="intro"><div><span class="eyebrow">DEL PAPEL AL ARCHIVO</span><h1>Tu papel, en limpio.</h1><p>Encuadra, mejora y reúne tus páginas. Todo se procesa aquí.</p></div><label class="button primary upload">＋ Añadir fotos<input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple></label></section>
+    <div id="message" role="status" aria-live="polite" hidden></div>
+    <div class="workspace">
+      <aside class="pages-panel panel"><div class="panel-heading"><h2>Páginas</h2><span id="page-count" class="count">0</span></div><p class="subtle">En el orden de tu documento</p><ol id="pages" aria-label="Páginas del documento"></ol><div class="sidebar-note">Sin cuentas. Sin nube.<br>Las fotos desaparecen de esta sesión al cerrar la página.</div></aside>
+      <section class="editor panel">
+        <div class="editor-bar"><div class="view-switch" role="group" aria-label="Vista"><button id="result-tab" class="selected" disabled>Resultado</button><button id="crop-tab" disabled>Encuadre</button></div><span id="dimensions" class="subtle">VISTA PREVIA</span></div>
+        <div id="drop-zone" class="preview-area">
+          <div id="empty-state"><div class="paper-illustration"><span></span><span></span><span></span></div><h2>Todo empieza con una foto</h2><p>Arrástrala aquí o pulsa «Añadir fotos».<br>JPEG, PNG, WebP y HEIC/HEIF.</p><small id="file-limit">Hasta 20 MiB por foto · 20 páginas</small></div>
+          <div id="image-stage" hidden><img id="preview" alt="Previsualización de la página seleccionada" draggable="false"><svg id="corner-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Ajuste de esquinas" hidden><polygon id="crop-polygon"></polygon><g id="handles"></g></svg></div>
+        </div>
+        <div class="editor-footer"><span id="scan-status">Listo para escanear</span><span id="page-position"></span></div>
+      </section>
+      <aside class="tools-panel panel">
+        <div class="panel-heading"><h2>Ajustes de página</h2><span class="step">01 / EDITAR</span></div>
+        <fieldset id="page-tools" disabled>
+          <legend class="sr-only">Herramientas de página</legend>
+          <label class="field-label" for="filter">Acabado</label>
+          <select id="filter"><option value="enhanced">Documento mejorado</option><option value="original">Original</option><option value="grayscale">Escala de grises</option><option value="bw">Blanco y negro</option></select>
+          <p class="help" id="filter-help">Reduce sombras y equilibra el contraste.</p>
+          <div class="rotate-row"><button id="rotate" class="button secondary">↻ Girar 90°</button><span id="rotation-value">0°</span></div>
+          <div class="divider"></div><h3>Encuadre</h3><p class="help">Arrastra las esquinas sobre la foto o ajusta sus coordenadas. El giro se aplica después del recorte.</p>
+          <div id="coordinate-fields" class="coordinates"></div>
+          <button id="full-frame" class="text-button">Usar imagen completa</button>
+          <button id="apply" class="button primary full">Aplicar ajustes</button>
+          <p id="dirty-note" class="help" hidden>Hay ajustes pendientes de aplicar.</p>
+          <div class="divider"></div><h3>Esta página</h3><div class="download-row"><button id="download-jpg" class="button secondary">↓ JPG</button><button id="download-pdf" class="button secondary">↓ PDF</button></div>
+        </fieldset>
+        <div class="divider"></div><div class="panel-heading"><h2>Documento completo</h2><span class="step">02 / EXPORTAR</span></div>
+        <label class="field-label" for="long-width">Anchura de imagen larga</label><select id="long-width"><option value="1200">1200 px · Ligera</option><option value="1600" selected>1600 px · Equilibrada</option><option value="2400">2400 px · Detallada</option></select>
+        <button id="export-pdf" class="button primary full" disabled>↓ Descargar PDF</button><button id="export-image" class="button secondary full" disabled>↓ Descargar imagen larga</button>
+        <p class="help">Se exportan las páginas aplicadas, en el orden de la lista. El PDF conserva una página por foto.</p>
+      </aside>
+    </div>
+    <footer class="page-footer"><span>Un espacio local para tus documentos.</span><span id="connection-status">Comprobando servicio…</span></footer>
+  </main>
+  <div id="busy-indicator" role="status" hidden><span class="spinner"></span><span id="busy-text">Procesando…</span></div>
+</body>
+</html>

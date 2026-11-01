@@ -1,0 +1,29 @@
+[project]
+name = "local-docscanner"
+version = "1.0.0"
+description = "Escáner de documentos local con API REST y editor web"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.120,<1",
+  "uvicorn>=0.34,<1",
+  "python-multipart>=0.0.20,<1",
+  "opencv-python-headless>=4.11,<5",
+  "numpy>=2.2,<3",
+  "pillow>=12,<14",
+  "pillow-heif>=1,<2",
+  "reportlab>=4.4,<5",
+  "swagger-ui-bundle==1.1.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3,<10", "httpx>=0.28,<1", "pypdf>=6,<8", "psutil>=7,<9", "ruff>=0.14,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --basetemp=.runtime/pytest"
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
