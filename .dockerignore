@@ -1,0 +1,8 @@
+**
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!scanner/
+!scanner/**
+**/__pycache__/
+**/*.py[cod]

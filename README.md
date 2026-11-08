@@ -4,7 +4,27 @@ Microservicio independiente de escaneo: API REST, editor web en español y expor
 
 ## Instalación y arranque
 
-Requisitos: Windows, PowerShell y [uv](https://docs.astral.sh/uv/getting-started/installation/). Compatible con Python 3.11–3.13; uv puede descargar el intérprete necesario.
+### Con Docker
+
+En Windows, inicia Docker Desktop en modo de contenedores Linux. Desde la carpeta del proyecto, ejecuta:
+
+```powershell
+.\scripts\start-docker.ps1
+```
+
+El script construye la imagen, arranca el contenedor en segundo plano y muestra la URL cuando `/health` responde. La primera construcción necesita Internet. La imagen instala Python y las dependencias fijadas en `uv.lock`. DocScanner procesa cada petición de forma independiente y funciona sin base de datos ni volúmenes persistentes.
+
+- **Editor y URL base de la API** · <http://127.0.0.1:8091/>
+- **Swagger** · <http://127.0.0.1:8091/docs>
+- **Estado** · <http://127.0.0.1:8091/health>
+
+El backend de Gestor Documentos, si se ejecuta en el mismo equipo, puede usar esa URL base para llamar a la API. El puerto publicado solo es accesible desde ese equipo.
+
+También puedes arrancar directamente con `docker compose up --build --wait` desde la carpeta del proyecto. Para detener y retirar el contenedor, usa `docker compose down`. Si el puerto 8091 está ocupado, define `$env:DOCSCANNER_PORT = '8092'` antes de arrancar. El script mostrará la URL con el nuevo puerto.
+
+### Sin Docker
+
+Requisitos para el arranque local en Windows: PowerShell y [uv](https://docs.astral.sh/uv/getting-started/installation/). Compatible con Python 3.11–3.13; uv puede descargar el intérprete necesario.
 
 Desde la carpeta del proyecto:
 
@@ -112,7 +132,7 @@ Si curl falla, el archivo de salida puede contener el JSON de error en lugar de 
 
 ## Configuración
 
-Define variables en la terminal antes de arrancar, por ejemplo `$env:SCANNER_PORT = '8092'`. No se cargan `.env` automáticamente.
+Para el arranque sin Docker, define variables en la terminal, por ejemplo `$env:SCANNER_PORT = '8092'`. La aplicación no carga `.env` automáticamente. Con Docker, `DOCSCANNER_PORT` cambia el puerto publicado. Para cambiar los límites del escáner en Docker, añade las variables `SCANNER_*` correspondientes a `environment` del servicio en `compose.yaml`.
 
 | Variable | Predeterminado |
 |---|---:|

@@ -1,0 +1,5 @@
+services:
+  docscanner:
+    build: .
+    ports:
+      - "127.0.0.1:${DOCSCANNER_PORT:-8091}:8091"
