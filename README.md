@@ -154,7 +154,7 @@ Fixtures versionadas en `tests/fixtures`: documento inclinado, sombras, fondo co
 
 La suite verifica solapamiento del recorte >90 % y error máximo <25 px en las tres fotos de referencia, perspectiva manual, ocho orientaciones EXIF, transparencia, HEIC, filtros, giro, contrato API, orden/orientación PDF, apilado JPEG, tipos falsos, archivos corruptos, límites, peticiones chunked, saturación y limpieza tras éxito/error.
 
-## Organización y límites de v1
+## Organización
 
 ```text
 scanner/
