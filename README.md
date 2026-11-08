@@ -170,4 +170,6 @@ scripts/          instalación, arranque, tests y medición
 uv.lock           versiones exactas
 ```
 
-El detector clásico favorece papel claro con bordes visibles sobre un fondo más oscuro. Puede fallar con papel oscuro, bordes fuera de la foto, fondos similares o sombras extremas; utiliza el recorte manual. No recupera texto borroso, zonas sobreexpuestas ni información tapada. La perspectiva rectifica un plano: no aplana curvatura de libros. EXIF corrige la orientación de cámara; no interpreta el sentido del texto. OCR y PDF con texto seleccionable quedan para una fase futura.
+El detector busca primero bordes y diferencias de luminosidad. Si no encuentra un contorno, intenta distinguir el papel de color neutro de un fondo más saturado. Esto ayuda con recibos en sombra sobre superficies de color. Utiliza el recorte manual si la detección falla con papel oscuro, bordes fuera de la foto, fondos similares o sombras extremas.
+
+No recupera texto borroso, zonas sobreexpuestas ni información tapada. La perspectiva rectifica un plano: no aplana curvatura de libros. EXIF corrige la orientación de cámara; no interpreta el sentido del texto. OCR y PDF con texto seleccionable quedan para una fase futura.
