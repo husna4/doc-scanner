@@ -13,7 +13,6 @@ test-results/
 .env
 
 # Seguimiento e instrucciones locales
-/PLAN.md
 /AGENTS.md
 /.agents/
 /.codex/
