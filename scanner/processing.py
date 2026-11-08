@@ -82,9 +82,26 @@ def detect(image: Image.Image) -> Detection:
     edges = cv2.Canny(blur, 45, 130)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
     _, light = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    best, score = _find_document((edges, light), gray)
+    if best is None:
+        # El papel neutro puede distinguirse de un fondo de color incluso bajo sombras.
+        saturation = cv2.cvtColor(small, cv2.COLOR_RGB2HSV)[:, :, 1]
+        saturation = cv2.GaussianBlur(saturation, (9, 9), 0)
+        threshold, _ = cv2.threshold(saturation, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, paper = cv2.threshold(saturation, min(threshold, 35), 255, cv2.THRESH_BINARY_INV)
+        paper[blur < 70] = 0
+        paper = cv2.morphologyEx(paper, cv2.MORPH_CLOSE, np.ones((19, 19), np.uint8))
+        best, score = _find_document((paper,), cv2.bitwise_not(saturation))
+    if best is None:
+        return Detection(False, [[0, 0], [1, 0], [1, 1], [0, 1]], 0.0)
     sh, sw = gray.shape
+    return Detection(True, normalized(best, sw, sh), round(score, 3))
+
+
+def _find_document(masks, contrast_channel):
+    sh, sw = contrast_channel.shape
     best, best_score = None, 0.0
-    for mask in (edges, light):
+    for mask in masks:
         contours, _ = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         for contour in sorted(contours, key=cv2.contourArea, reverse=True)[:30]:
             area = cv2.contourArea(contour)
@@ -108,22 +125,20 @@ def detect(image: Image.Image) -> Detection:
                 )
                 if on_frame.sum() > 1:
                     continue
-                inside = np.zeros_like(gray)
+                inside = np.zeros_like(contrast_channel)
                 cv2.fillConvexPoly(inside, points.astype(np.int32), 255)
                 inner = cv2.erode(inside, np.ones((11, 11), np.uint8))
                 ring = cv2.subtract(cv2.dilate(inside, np.ones((19, 19), np.uint8)), inside)
                 if not np.any(inner) or not np.any(ring):
                     continue
-                contrast = cv2.mean(gray, inner)[0] - cv2.mean(gray, ring)[0]
+                contrast = cv2.mean(contrast_channel, inner)[0] - cv2.mean(contrast_channel, ring)[0]
                 if contrast < 10:
                     continue
                 solidity = min(area / max(cv2.contourArea(quad), 1), 1.0)
                 score = coverage * 0.65 + min(contrast / 100, 1) * 0.25 + solidity * 0.1
                 if score > best_score:
                     best, best_score = points, score
-    if best is None:
-        return Detection(False, [[0, 0], [1, 0], [1, 1], [0, 1]], 0.0)
-    return Detection(True, normalized(best, sw, sh), round(best_score, 3))
+    return best, best_score
 
 
 def parse_corners(value: str | None) -> list[list[float]] | None:

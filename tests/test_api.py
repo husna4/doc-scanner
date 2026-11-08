@@ -7,7 +7,7 @@ import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 from pypdf import PdfReader
 
 from scanner.api import create_app
@@ -60,6 +60,31 @@ def test_no_detection_is_successful_fallback(client):
     with Image.open(io.BytesIO(result.content)) as image:
         assert image.size == (800, 600)
         assert 95 < image.getpixel((100, 100))[0] < 105
+
+
+def test_auto_scan_crops_shadowed_receipt_on_colored_background(client):
+    y, x = np.mgrid[:600, :480]
+    light = 0.70 + 0.40 * x / 479
+    photo = (np.array([215, 160, 109]) * light[:, :, None]).astype(np.uint8)
+    mask = Image.new("L", (480, 600))
+    ImageDraw.Draw(mask).polygon([(130, 95), (337, 88), (352, 531), (118, 541)], fill=255)
+    paper = (161 + 0.09 * (x - 220) - 29 * np.exp(-((y - 390) / 35) ** 2)).astype(np.uint8)
+    inside = np.asarray(mask) > 0
+    photo[inside] = paper[inside, None]
+    data = io.BytesIO()
+    Image.fromarray(photo).filter(ImageFilter.GaussianBlur(2)).save(data, "PNG")
+
+    response = client.post(
+        "/api/scan",
+        files={"file": ("foto.png", data.getvalue())},
+        data={"filter": "enhanced", "auto_crop": "true"},
+    )
+    assert response.status_code == 200
+    assert response.headers["x-scan-detection"] == "detected"
+    assert response.headers["x-scan-filter"] == "enhanced"
+    with Image.open(io.BytesIO(response.content)) as result:
+        assert 220 <= result.width <= 240
+        assert 435 <= result.height <= 455
 
 
 @pytest.mark.parametrize("mode", ["original", "grayscale", "bw", "enhanced"])
