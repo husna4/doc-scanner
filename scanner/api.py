@@ -15,7 +15,6 @@ from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from starlette.background import BackgroundTask
-from swagger_ui_bundle import swagger_ui_path
 
 from scanner import __version__, export
 from scanner.config import ROOT, Settings
@@ -26,6 +25,8 @@ from scanner.uploads import image_form
 
 logger = logging.getLogger("docscanner")
 STATIC = Path(__file__).parent / "static"
+# https://github.com/swagger-api/swagger-ui/releases/tag/v5.34.1
+SWAGGER_STATIC = Path(__file__).parent / "swagger"
 ERRORS = {
     code: {
         "description": description,
@@ -179,7 +180,7 @@ def create_app(settings: Settings | None = None, temp_dir: Path | None = None):
     application.state.temp_dir = directory
     application.add_middleware(ResourceGuard, settings=settings)
     application.mount("/static", StaticFiles(directory=STATIC), name="static")
-    application.mount("/swagger", StaticFiles(directory=str(swagger_ui_path)), name="swagger")
+    application.mount("/swagger", StaticFiles(directory=SWAGGER_STATIC), name="swagger")
 
     @application.exception_handler(ScanError)
     async def scan_error(request, error):

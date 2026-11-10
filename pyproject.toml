@@ -12,7 +12,6 @@ dependencies = [
   "pillow>=12,<14",
   "pillow-heif>=1,<2",
   "reportlab>=4.4,<5",
-  "swagger-ui-bundle==1.1.0",
 ]
 
 [dependency-groups]
