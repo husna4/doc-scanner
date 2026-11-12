@@ -1,97 +1,97 @@
 # DocScanner
 
-[English](README.en.md) · Español
+English · [Español](README.es.md)
 
-Microservicio independiente de escaneo: API REST, editor web en español e inglés y exportación JPEG/PDF. Python + FastAPI + OpenCV. Procesamiento local, sin cuentas, claves ni servicios externos.
+Standalone scanning microservice: REST API, Spanish/English web editor and JPEG/PDF export. Python + FastAPI + OpenCV. Local processing without accounts, keys or external services.
 
-## Instalación y arranque
+## Installation and startup
 
-### Con Docker
+### With Docker
 
-Instala **Docker Desktop** (incluye Compose) o, en Linux, **Docker Engine con Docker Compose**. [Opciones de instalación](https://docs.docker.com/compose/install/)
+Install **Docker Desktop** (includes Compose) or, on Linux, **Docker Engine with Docker Compose**. [Installation options](https://docs.docker.com/compose/install/)
 
-Desde la carpeta del proyecto, ejecuta el mismo comando en Windows o Linux:
+From the project directory, run the same command on Windows or Linux:
 
 ```sh
 docker compose up --build --wait
 ```
 
-- **Editor y URL base de la API** · <http://127.0.0.1:8091/>
+- **Editor and API base URL** · <http://127.0.0.1:8091/>
 - **Swagger** · <http://127.0.0.1:8091/docs>
-- **Estado** · <http://127.0.0.1:8091/health>
+- **Health** · <http://127.0.0.1:8091/health>
 
-En Windows también puedes ejecutar `.\scripts\start-docker.cmd` para que el lanzador muestre la URL al terminar el arranque.
+On Windows you can also run `.\scripts\start-docker.cmd`; the launcher displays the URL after startup.
 
-Para detener y retirar el contenedor, usa `docker compose down`.
+To stop and remove the container, use `docker compose down`.
 
-### Sin Docker
+### Without Docker
 
-Requisitos para el arranque local en Windows: PowerShell y [uv](https://docs.astral.sh/uv/getting-started/installation/). Compatible con Python 3.11–3.13; uv puede descargar el intérprete necesario.
+Local Windows startup requires PowerShell and [uv](https://docs.astral.sh/uv/getting-started/installation/). Python 3.11–3.13 is supported; uv can download the required interpreter.
 
-Desde la carpeta del proyecto:
+From the project directory:
 
 ```powershell
 .\scripts\install.ps1
 .\scripts\start.ps1
 ```
 
-La instalación utiliza `uv.lock` para fijar las versiones y guarda el entorno y la caché dentro del proyecto. La primera instalación necesita Internet; después, el servicio, el editor y Swagger funcionan sin conexión.
+Installation uses `uv.lock` to pin versions and keeps the environment and cache inside the project. The first installation requires Internet access; afterwards the service, editor and Swagger work offline.
 
 - **Editor:** <http://127.0.0.1:8091/>
 - **Swagger:** <http://127.0.0.1:8091/docs>
 - **OpenAPI:** <http://127.0.0.1:8091/openapi.json>
-- **Estado:** <http://127.0.0.1:8091/health>
+- **Health:** <http://127.0.0.1:8091/health>
 
-Para detener: Ctrl+C. Para otro puerto: `.\scripts\start.ps1 -Port 8092`.
-Para seleccionar un intérprete: `.\scripts\install.ps1 -Python '3.12'`.
+To stop: Ctrl+C. For a different port: `.\scripts\start.ps1 -Port 8092`.
+To choose an interpreter: `.\scripts\install.ps1 -Python '3.12'`.
 
-## Uso del editor
+## Using the editor
 
-El selector **Idioma** de la cabecera ofrece **Español** y **English**, sin recargar ni reprocesar fotos. Se usa primero la preferencia válida guardada (`es` o `en`), después el primer idioma compatible de `navigator.languages` (con `navigator.language` como alternativa) y, si ninguno coincide, inglés. Se reconocen variantes como `es-MX` o `en-GB`. La elección manual se guarda únicamente en `localStorage`, en `docscanner.language`. Si el almacenamiento está bloqueado, la elección se mantiene en memoria mientras la página siga abierta. El selector se deshabilita durante operaciones y al arrastrar esquinas. Swagger tiene su propia interfaz y queda fuera del selector.
+The header's **Language** selector offers **Español** and **English**, without reloading or processing photos again. A valid saved preference (`es` or `en`) takes priority, followed by the first supported language in `navigator.languages` (with `navigator.language` as a fallback), then English if none match. Regional variants such as `es-MX` and `en-GB` are recognized. Manual choices are saved only in `localStorage`, under `docscanner.language`. If storage is blocked, the choice stays in memory while the page remains open. The selector is disabled during operations and corner dragging. Swagger has its own interface and is outside the editor's language selector.
 
-1. Añade fotos o arrástralas al área central. Se preparan en secuencia.
-2. Selecciona una página de la lista. La vista **Encuadre** muestra el original corregido por EXIF y cuatro esquinas editables con ratón, táctil o campos de porcentaje.
-3. Elige el acabado: **original**, **escala de grises**, **blanco y negro adaptativo** o **documento mejorado**. Gira en pasos de 90° y pulsa **Aplicar ajustes**.
-4. Usa las flechas de la lista para reordenar y × para eliminar. Descarga la página como JPEG/PDF o todo el documento como PDF multipágina/JPEG largo.
+1. Add photos or drag them into the central area. They are prepared sequentially.
+2. Select a page from the list. **Crop** shows the EXIF-corrected original and four corners editable with a mouse, touch or percentage fields.
+3. Choose a finish: **original**, **grayscale**, **adaptive black and white** or **enhanced document**. Rotate in 90° steps and choose **Apply settings**.
+4. Use the list arrows to reorder and × to delete. Download a page as JPEG/PDF or the whole document as a multipage PDF/long JPEG.
 
-Si no se encuentra un documento, se conserva el encuadre completo y se omite el filtro automático. Ajusta las esquinas o pulsa **Usar imagen completa** y aplica los ajustes. Se indica explícitamente el resultado de detección.
+If no document is found, the full frame is kept and the automatic filter is skipped. Adjust the corners or choose **Use full image**, then apply settings. The detection outcome is shown explicitly.
 
-Los cambios pendientes deben aplicarse antes de exportar. Reprocesar utiliza siempre el archivo original: no acumula compresión por cambiar filtros o esquinas. La exportación PDF incluye exactamente las páginas aplicadas en el orden visible.
+Pending settings must be applied before exporting. Processing always uses the original file, so changing filters or corners does not accumulate compression. PDF export contains exactly the applied pages in the visible order.
 
 ## API
 
-Todas las subidas usan `multipart/form-data`. El nombre, la extensión y el MIME declarado no sustituyen la validación del contenido. Se aceptan JPEG, PNG, WebP y HEIC/HEIF fijos; se rechazan animaciones, secuencias, archivos vacíos o corruptos. JPG y JPEG son el mismo formato.
+All uploads use `multipart/form-data`. Names, extensions and declared MIME types do not replace content validation. Still JPEG, PNG, WebP and HEIC/HEIF images are supported; animations, sequences, empty and corrupt files are rejected. JPG and JPEG are the same format.
 
-| Método y ruta | Entrada | Salida |
+| Method and path | Input | Output |
 |---|---|---|
-| `GET /health` | — | Estado, versión, formatos y límites |
-| `POST /api/detect` | `file` | JSON: dimensiones orientadas, `detected`, `corners`, `score` |
-| `POST /api/scan` | `file`, opciones siguientes | JPEG, sin EXIF/GPS |
-| `POST /api/export/pdf` | Campo `files` repetido y ordenado | PDF A4 multipágina |
-| `POST /api/export/image` | `files` repetido, `width` opcional | JPEG vertical |
+| `GET /health` | — | Status, version, formats and limits |
+| `POST /api/detect` | `file` | JSON: oriented dimensions, `detected`, `corners`, `score` |
+| `POST /api/scan` | `file`, options below | JPEG without EXIF/GPS |
+| `POST /api/export/pdf` | Repeated, ordered `files` field | Multipage A4 PDF |
+| `POST /api/export/image` | Repeated `files`, optional `width` | Vertical JPEG |
 
-`/api/scan` acepta:
+`/api/scan` accepts:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| `filter` | `original`, `grayscale`, `bw`, `enhanced` (predeterminado) |
-| `rotation` | `0` (predeterminado), `90`, `180`, `270`; sentido horario |
-| `auto_crop` | `true` (predeterminado) o `false` |
-| `corners` | Cadena JSON de cuatro pares normalizados entre 0 y 1 |
+| `filter` | `original`, `grayscale`, `bw`, `enhanced` (default) |
+| `rotation` | `0` (default), `90`, `180`, `270`; clockwise |
+| `auto_crop` | `true` (default) or `false` |
+| `corners` | JSON string of four normalized pairs between 0 and 1 |
 
-Orden de `corners`: **superior izquierda, superior derecha, inferior derecha, inferior izquierda**. Se refieren a la imagen después de corregir EXIF, antes de aplicar `rotation`. Deben formar un cuadrilátero convexo, no cruzado, con área suficiente. Un punto `(1,1)` identifica el último píxel inferior derecho. Las esquinas manuales prevalecen sobre la detección automática.
+`corners` order: **top left, top right, bottom right, bottom left**. Coordinates refer to the image after EXIF correction, before `rotation`. They must form a convex, non-crossed quadrilateral with sufficient area. A point `(1,1)` identifies the last bottom-right pixel. Manual corners override automatic detection.
 
-Cabeceras JPEG: `X-Scan-Detection` = `detected`, `not_detected`, `manual` o `disabled`; `X-Scan-Filter` indica el filtro realmente aplicado. Ante `not_detected`, devuelve JPEG con el encuadre completo y EXIF corregido; no conserva los bytes originales ni sus metadatos. El giro solicitado sí se aplica.
+JPEG headers: `X-Scan-Detection` = `detected`, `not_detected`, `manual` or `disabled`; `X-Scan-Filter` indicates the filter actually applied. For `not_detected`, the response is a full-frame JPEG with corrected EXIF orientation; original bytes and metadata are not preserved. Requested rotation still applies.
 
-`score` es una puntuación heurística para diagnóstico, no una probabilidad calibrada.
+`score` is a diagnostic heuristic score, not a calibrated probability.
 
-Los exports reciben **imágenes ya procesadas**; no vuelven a detectar bordes ni aplicar filtros. Una imagen basta para obtener un PDF de una página. El PDF ajusta cada foto sin deformar ni recortar, con orientación A4 por página y margen de 12 puntos. No contiene OCR.
+Exports receive **already processed images**; they do not detect edges or apply filters again. One image is enough for a single-page PDF. The PDF fits each photo without distortion or cropping, with A4 orientation chosen per page and a 12-point margin. It contains no OCR.
 
-La imagen larga utiliza una anchura común `width` entre 300 y 3000 px (1600 por defecto), conserva la proporción de cada página y las apila sin separación. Puede ampliar páginas pequeñas; usa menos anchura si no quieres ampliarlas. El servidor rechaza dimensiones excesivas antes de reservar el lienzo final.
+Long images use a common `width` between 300 and 3000 px (1600 by default), preserve each page's aspect ratio and stack them without gaps. Small pages may be upscaled; use a smaller width to avoid this. The server rejects excessive dimensions before allocating the final canvas.
 
-### Ejemplos con curl.exe (PowerShell)
+### curl.exe examples (PowerShell)
 
-Los comandos siguientes funcionan con las muestras del proyecto y dejan los resultados dentro de `.runtime/ejemplos`:
+These commands use the project's sample images and save results inside `.runtime/ejemplos`:
 
 ```powershell
 New-Item -ItemType Directory -Force .runtime\ejemplos | Out-Null
@@ -105,7 +105,7 @@ curl.exe --fail-with-body -X POST http://127.0.0.1:8091/api/scan `
   -F 'file=@tests/fixtures/inclinado.jpg' -F 'filter=enhanced' `
   -D .runtime/ejemplos/cabeceras.txt -o .runtime/ejemplos/pagina.jpg
 
-# Recorte manual; puntos tras EXIF y giro horario después del recorte.
+# Manual crop; points after EXIF, clockwise rotation after cropping.
 curl.exe --fail-with-body -X POST http://127.0.0.1:8091/api/scan `
   -F 'file=@tests/fixtures/inclinado.jpg' -F 'filter=grayscale' -F 'rotation=90' `
   -F 'corners=[[0.237,0.090],[0.764,0.170],[0.837,0.901],[0.127,0.831]]' `
@@ -120,98 +120,97 @@ curl.exe --fail-with-body -X POST http://127.0.0.1:8091/api/export/image `
   -F 'width=1600' -o .runtime/ejemplos/documento-largo.jpg
 ```
 
-Si curl falla, el archivo de salida puede contener el JSON de error en lugar de una imagen: comprueba su código de salida y la respuesta HTTP.
+If curl fails, the output file may contain error JSON instead of an image: check its exit code and HTTP response.
 
-### Errores
+### Errors
 
 ```json
 {"error":{"code":"limit_exceeded","message":"Un archivo supera el tamaño máximo permitido.","message_key":"errors.fileSize"}}
 ```
 
-- `413`: tamaño, páginas, píxeles, dimensiones o resultado excedidos.
-- `415`: formato real no compatible o petición sin multipart.
-- `422`: imagen inválida, parámetros, esquinas o formulario incompleto.
-- `503`: servicio ocupado; `Retry-After: 2`. Reintentar de forma acotada.
-- `500`: error interno, sin incluir contenido de imagen ni traza en la respuesta.
+- `413`: file size, pages, pixels, dimensions or output limit exceeded.
+- `415`: unsupported actual format or request without multipart.
+- `422`: invalid image, parameters, corners or incomplete form.
+- `503`: service busy; `Retry-After: 2`. Use bounded retries.
+- `500`: internal error, without image content or a traceback in the response.
 
-Los códigos HTTP, `error.code` y `error.message` conservan su contrato. Los campos opcionales `error.message_key` y `error.params` añaden metadatos seguros para traducir en el navegador. Los clientes existentes pueden ignorarlos. Los detalles de validación de Pydantic se mantienen en la API; el editor presenta un mensaje localizado de parámetros inválidos. No se envía ningún idioma al servidor.
+HTTP statuses, `error.code` and `error.message` retain their existing contract. Optional `error.message_key` and `error.params` fields add safe metadata for browser translation. Existing clients can ignore them. Pydantic validation details remain in the API; the editor shows a localized invalid-parameters message. No language is sent to the server.
 
-## Configuración
+## Configuration
 
-Para el arranque sin Docker, define variables en la terminal, por ejemplo `$env:SCANNER_PORT = '8092'`. La aplicación no carga `.env` automáticamente. Si el puerto 8091 está ocupado, puedes definir `DOCSCANNER_PORT` en el entorno desde el que ejecutas Docker Compose para cambiar el puerto publicado. Para cambiar los límites del escáner en Docker, añade las variables `SCANNER_*` correspondientes a `environment` del servicio en `compose.yaml`.
+For startup without Docker, set variables in the terminal, for example `$env:SCANNER_PORT = '8092'`. The application does not load `.env` automatically. If port 8091 is occupied, set `DOCSCANNER_PORT` in the environment used to run Docker Compose to change the published port. To change scanner limits in Docker, add the appropriate `SCANNER_*` variables to the service's `environment` in `compose.yaml`.
 
-| Variable | Predeterminado |
+| Variable | Default |
 |---|---:|
 | `SCANNER_HOST` | `127.0.0.1` |
 | `SCANNER_PORT` | `8091` |
 | `SCANNER_MAX_FILE_BYTES` | `20971520` (20 MiB) |
-| `SCANNER_MAX_REQUEST_BYTES` | `209715200` (200 MiB, incluido multipart) |
+| `SCANNER_MAX_REQUEST_BYTES` | `209715200` (200 MiB, including multipart) |
 | `SCANNER_MAX_PAGES` | `20` |
-| `SCANNER_MAX_PIXELS` | `40000000` por imagen |
-| `SCANNER_MAX_LONG_PIXELS` | `60000000` para imagen larga |
-| `SCANNER_MAX_DIMENSION` | `60000` por lado, máximo configurable 65000 |
-| `SCANNER_MAX_CONCURRENCY` | `1` petición de procesamiento/exportación |
+| `SCANNER_MAX_PIXELS` | `40000000` per image |
+| `SCANNER_MAX_LONG_PIXELS` | `60000000` for a long image |
+| `SCANNER_MAX_DIMENSION` | `60000` per side, configurable maximum 65000 |
+| `SCANNER_MAX_CONCURRENCY` | `1` processing/export request |
 | `SCANNER_JPEG_QUALITY` | `92` |
 
-El resultado exportado también está limitado a `SCANNER_MAX_REQUEST_BYTES`. Se verifica el tamaño de petición incluso sin Content-Length. Los archivos se cuentan y limitan durante el análisis multipart. Las dimensiones se consultan antes de cargar los píxeles.
+Export output is also limited to `SCANNER_MAX_REQUEST_BYTES`. Request size is checked even without Content-Length. Files are counted and limited while parsing multipart. Dimensions are checked before loading pixels.
 
-Cada lote se decodifica por páginas. La imagen larga necesita un lienzo completo; el límite de píxeles acota esa reserva. El máximo configurado no es una cuota estricta de RSS: OpenCV, Pillow y PDF pueden utilizar varias copias/buffers. Aumentar píxeles o concurrencia aumenta memoria. Se sirve con un único proceso para que el límite de concurrencia sea global al servicio.
+Each batch is decoded page by page. A long image needs a complete canvas; the pixel limit bounds that allocation. The configured maximum is not a strict RSS quota: OpenCV, Pillow and PDF processing can use several copies/buffers. Increasing pixels or concurrency increases memory usage. The service runs in a single process so its concurrency limit applies to the whole service.
 
-## Archivos, privacidad y acceso
+## Files, privacy and access
 
-- Sin base de datos ni IDs persistentes. El servidor no mantiene imágenes entre peticiones.
-- Los archivos pequeños se procesan en memoria. Los mayores pueden volcarse a temporales propios en `.runtime/uploads`, con borrado al cerrar, también ante errores o desconexión. El arranque limpia restos propios de más de 24 h sin recorrer otras carpetas.
-- El navegador mantiene originales y resultados solamente en memoria, sin guardarlos en localStorage/IndexedDB. `localStorage` guarda únicamente la preferencia de idioma (`docscanner.language`: `es` o `en`). Se liberan URLs de blobs al reemplazar/eliminar páginas. Cerrar o recargar pierde el documento; descárgalo primero.
-- Las descargas solicitadas son archivos persistentes elegidos por el usuario. El navegador controla su carpeta de destino.
-- Respuestas `Cache-Control: no-store`; no se registran contenido de imágenes ni nombres de archivo en errores. No se copian EXIF/GPS a JPEG/PDF exportados.
-- Por defecto escucha en `127.0.0.1` y no incorpora autenticación.
+- No database or persistent IDs. The server does not retain images between requests.
+- Small files are processed in memory. Larger files may spill to owned temporary files in `.runtime/uploads`, deleted on close, including errors or disconnections. Startup removes owned leftovers older than 24 hours without traversing other directories.
+- The browser keeps originals and results only in memory, without saving them in localStorage/IndexedDB. `localStorage` stores only the language preference (`docscanner.language`: `es` or `en`). Blob URLs are released when pages are replaced or deleted. Closing or reloading loses the document; download it first.
+- Requested downloads are persistent files chosen by the user. The browser controls the destination folder.
+- Responses use `Cache-Control: no-store`; image content and filenames are not logged in errors. EXIF/GPS metadata is not copied to exported JPEG/PDF files.
+- By default the service listens on `127.0.0.1` and has no authentication.
 
 ## Tests
 
 ```powershell
 .\scripts\test.ps1
-# Regenerar las imágenes sintéticas, si se cambia el generador:
+# Regenerate synthetic images if the generator changes:
 .\.venv\Scripts\python.exe -m tests.generate_fixtures
-# Medición orientativa y hoja de revisión:
+# Indicative benchmark and review sheet:
 .\.venv\Scripts\python.exe scripts\benchmark.py
 ```
 
-Fixtures versionadas en `tests/fixtures`: documento inclinado, sombras, fondo complejo, imagen sin documento y página de referencia. `corners.json` contiene sus esquinas conocidas. No incluyen datos personales.
+Versioned fixtures in `tests/fixtures`: inclined document, shadows, complex background, image without a document and reference page. `corners.json` contains their known corners. They contain no personal data.
 
-La suite verifica solapamiento del recorte >90 % y error máximo <25 px en las tres fotos de referencia, perspectiva manual, ocho orientaciones EXIF, transparencia, HEIC, filtros, giro, contrato API, orden/orientación PDF, apilado JPEG, tipos falsos, archivos corruptos, límites, peticiones chunked, saturación y limpieza tras éxito/error.
+The suite checks crop overlap >90% and maximum error <25 px on the three reference photos, manual perspective, eight EXIF orientations, transparency, HEIC, filters, rotation, API contract, PDF order/orientation, JPEG stacking, false types, corrupt files, limits, chunked requests, saturation and cleanup after success/error.
 
-Las pruebas de catálogos y de compatibilidad de errores se incluyen en la suite habitual. Para ejecutar también el editor en Chromium real, instala el grupo opcional de desarrollo y el navegador (requieren Internet la primera vez):
+Catalog and error compatibility tests are part of the regular suite. To also test the editor in real Chromium, install the optional development group and browser (Internet is required the first time):
 
 ```powershell
 $env:UV_CACHE_DIR = Join-Path $PWD '.cache\uv'
 uv sync --locked --group browser --no-install-project
 .\.venv\Scripts\python.exe -m playwright install chromium
 .\scripts\test.ps1 --editor
-# Solo las pruebas del navegador:
+# Browser tests only:
 .\.venv\Scripts\python.exe -m pytest tests/browser --editor
 ```
 
-Playwright no es necesario para instalar ni arrancar la app y no se instala en la imagen Docker. Sin `--editor`, las pruebas de navegador se omiten explícitamente. Arrancan su propio servicio en un puerto local libre y comprueban ambos idiomas, conservación de datos y bloqueos, avisos, almacenamiento bloqueado, operaciones completas, ausencia de peticiones externas y errores JavaScript. Las capturas de escritorio (1440 px) y móvil (375 px), con campos de coordenadas visibles, se guardan en `.runtime/pytest/browser*/editor-*.png` para revisión visual. Estas pruebas usan Chromium; no cubren otros motores ni dispositivos físicos.
+Playwright is not required to install or start the app and is not installed in the Docker image. Without `--editor`, browser tests are explicitly skipped. They start their own service on an available local port and check both languages, data preservation and locks, notices, blocked storage, complete operations, absence of external requests and JavaScript errors. Desktop (1440 px) and mobile (375 px) screenshots with visible coordinate fields are saved under `.runtime/pytest/browser*/editor-*.png` for visual review. These tests use Chromium; other engines and physical devices are not covered.
 
-## Traducciones
+## Translations
 
-`scanner/static/i18n.js` carga los catálogos locales `locales/es.json` y `locales/en.json` antes del editor. `t(key, params)` interpola parámetros con nombre y usa inglés si falta una clave en el idioma activo. Los textos estáticos usan `data-i18n` en elementos de texto; los atributos permitidos son `data-i18n-title`, `data-i18n-alt` y `data-i18n-aria-label`. No marques contenedores con controles o iconos: marca un `span` de texto para conservar sus hijos.
+`scanner/static/i18n.js` loads local `locales/es.json` and `locales/en.json` catalogs before the editor. `t(key, params)` interpolates named parameters and falls back to English for missing keys. Static text uses `data-i18n` on text elements; allowed attributes are `data-i18n-title`, `data-i18n-alt` and `data-i18n-aria-label`. Do not mark containers containing controls or icons: mark a text `span` to preserve their children.
 
-Para añadir un mensaje, incluye la misma clave semántica y los mismos parámetros en ambos JSON. Guarda los estados y avisos como claves con datos, sin frases ya traducidas. Para añadir otro idioma, copia el catálogo inglés, traduce sus valores sin cambiar claves ni parámetros, registra el código en `i18n.js` (carga, resolución y selección), añade su opción accesible en la cabecera y amplía las pruebas de catálogos, resolución y navegador. Las claves nuevas de errores deben añadirse también en sus puntos de origen del servidor; utiliza únicamente parámetros seguros. No traduzcas valores multipart, nombres de archivo, rutas ni nombres de descarga.
+To add a message, include the same semantic key and parameters in both JSON files. Store states and notices as keys with data, without already translated sentences. To add another language, copy the English catalog, translate its values without changing keys or parameters, register its code in `i18n.js` (loading, resolution and selection), add its accessible header option and extend catalog, resolution and browser tests. New error keys must also be added at their server origins; use only safe parameters. Do not translate multipart values, filenames, paths or download names.
 
-## Organización
+## Organization
 
 ```text
 scanner/
-  api.py          endpoints, validación de opciones y OpenAPI
-  processing.py   EXIF, detección, perspectiva y filtros
-  export.py       PDF y JPEG largo
-  uploads.py      multipart y temporales acotados
-  middleware.py   límites de petición y concurrencia
-  config.py       configuración por entorno
-  static/         editor sin dependencias externas
-tests/            fixtures y pruebas de integración/procesamiento
-scripts/          instalación, arranque, tests y medición
-uv.lock           versiones exactas
+  api.py          endpoints, option validation and OpenAPI
+  processing.py   EXIF, detection, perspective and filters
+  export.py       PDF and long JPEG
+  uploads.py      bounded multipart and temporary files
+  middleware.py   request and concurrency limits
+  config.py       environment configuration
+  static/         editor without external dependencies
+tests/            fixtures and integration/processing tests
+scripts/          installation, startup, tests and benchmarking
+uv.lock           exact versions
 ```
-
