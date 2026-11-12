@@ -11,6 +11,10 @@ from scanner.config import Settings
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+def pytest_addoption(parser):
+    parser.addoption("--editor", action="store_true", help="Run real Chromium editor tests (Playwright)")
+
+
 def pytest_configure(config):
     (Path(__file__).resolve().parent.parent / ".runtime").mkdir(exist_ok=True)
 

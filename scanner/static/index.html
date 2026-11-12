@@ -2,51 +2,51 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DocScanner · Tu papel, en limpio</title>
+  <title data-i18n="app.title">DocScanner · Tu papel, en limpio</title>
   <link rel="icon" href="/static/favicon.svg"><link rel="stylesheet" href="/static/style.css">
-  <script src="/static/app.js" defer></script>
+  <script type="module" src="/static/app.js"></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/"><img src="/static/favicon.svg" width="38" height="38" alt=""><span>DocScanner<small>ESTUDIO DE DOCUMENTOS</small></span></a>
-    <div class="header-right"><span class="local-badge"><i></i> Solo en tu equipo</span><a href="/docs" target="_blank" rel="noopener">API ↗</a></div>
+    <a class="brand" href="/"><img src="/static/favicon.svg" width="38" height="38" alt=""><span>DocScanner<small><span data-i18n="header.studio">ESTUDIO DE DOCUMENTOS</span></small></span></a>
+    <div class="header-right"><label class="language-control"><span data-i18n="language.label">Idioma</span><select id="language" data-i18n-aria-label="language.label" aria-label="Idioma"><option value="es" lang="es">Español</option><option value="en" lang="en">English</option></select></label><span class="local-badge"><i></i> <span data-i18n="header.local">Solo en tu equipo</span></span><a href="/docs" target="_blank" rel="noopener">API ↗</a></div>
   </header>
   <main>
-    <section class="intro"><div><span class="eyebrow">DEL PAPEL AL ARCHIVO</span><h1>Tu papel, en limpio.</h1><p>Encuadra, mejora y reúne tus páginas. Todo se procesa aquí.</p></div><label class="button primary upload">＋ Añadir fotos<input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple></label></section>
+    <section class="intro"><div><span class="eyebrow"><span data-i18n="intro.eyebrow">DEL PAPEL AL ARCHIVO</span></span><h1><span data-i18n="intro.title">Tu papel, en limpio.</span></h1><p><span data-i18n="intro.description">Encuadra, mejora y reúne tus páginas. Todo se procesa aquí.</span></p></div><label class="button primary upload">＋ <span data-i18n="actions.add">Añadir fotos</span><input id="file-input" data-i18n-aria-label="actions.add" aria-label="Añadir fotos" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple></label></section>
     <div id="message" role="status" aria-live="polite" hidden></div>
     <div class="workspace">
-      <aside class="pages-panel panel"><div class="panel-heading"><h2>Páginas</h2><span id="page-count" class="count">0</span></div><p class="subtle">En el orden de tu documento</p><ol id="pages" aria-label="Páginas del documento"></ol><div class="sidebar-note">Sin cuentas. Sin nube.<br>Las fotos desaparecen de esta sesión al cerrar la página.</div></aside>
+      <aside class="pages-panel panel"><div class="panel-heading"><h2><span data-i18n="pages.title">Páginas</span></h2><span id="page-count" class="count">0</span></div><p class="subtle"><span data-i18n="pages.order">En el orden de tu documento</span></p><ol id="pages" aria-label="Páginas del documento" data-i18n-aria-label="pages.label"></ol><div class="sidebar-note"><span data-i18n="pages.privacy">Sin cuentas. Sin nube.</span><br><span data-i18n="pages.session">Las fotos desaparecen de esta sesión al cerrar la página.</span></div></aside>
       <section class="editor panel">
-        <div class="editor-bar"><div class="view-switch" role="group" aria-label="Vista"><button id="result-tab" class="selected" disabled>Resultado</button><button id="crop-tab" disabled>Encuadre</button></div><span id="dimensions" class="subtle">VISTA PREVIA</span></div>
+        <div class="editor-bar"><div class="view-switch" role="group" aria-label="Vista" data-i18n-aria-label="view.label"><button id="result-tab" class="selected" disabled><span data-i18n="view.result">Resultado</span></button><button id="crop-tab" disabled><span data-i18n="view.crop">Encuadre</span></button></div><span id="dimensions" class="subtle"><span data-i18n="view.preview">VISTA PREVIA</span></span></div>
         <div id="drop-zone" class="preview-area">
-          <div id="empty-state"><div class="paper-illustration"><span></span><span></span><span></span></div><h2>Todo empieza con una foto</h2><p>Arrástrala aquí o pulsa «Añadir fotos».<br>JPEG, PNG, WebP y HEIC/HEIF.</p><small id="file-limit">Hasta 20 MiB por foto · 20 páginas</small></div>
-          <div id="image-stage" hidden><img id="preview" alt="Previsualización de la página seleccionada" draggable="false"><svg id="corner-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Ajuste de esquinas" hidden><polygon id="crop-polygon"></polygon><g id="handles"></g></svg></div>
+          <div id="empty-state"><div class="paper-illustration"><span></span><span></span><span></span></div><h2><span data-i18n="empty.title">Todo empieza con una foto</span></h2><p><span data-i18n="empty.help">Arrástrala aquí o pulsa «Añadir fotos».</span><br>JPEG, PNG, WebP y HEIC/HEIF.</p><small id="file-limit">Hasta 20 MiB por foto · 20 páginas</small></div>
+          <div id="image-stage" hidden><img id="preview" alt="Previsualización de la página seleccionada" data-i18n-alt="view.alt" draggable="false"><svg id="corner-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Ajuste de esquinas" data-i18n-aria-label="crop.label" hidden><polygon id="crop-polygon"></polygon><g id="handles"></g></svg></div>
         </div>
-        <div class="editor-footer"><span id="scan-status">Listo para escanear</span><span id="page-position"></span></div>
+        <div class="editor-footer"><span id="scan-status"><span data-i18n="status.ready">Listo para escanear</span></span><span id="page-position"></span></div>
       </section>
       <aside class="tools-panel panel">
-        <div class="panel-heading"><h2>Ajustes de página</h2><span class="step">01 / EDITAR</span></div>
+        <div class="panel-heading"><h2><span data-i18n="tools.title">Ajustes de página</span></h2><span class="step"><span data-i18n="tools.edit">01 / EDITAR</span></span></div>
         <fieldset id="page-tools" disabled>
-          <legend class="sr-only">Herramientas de página</legend>
-          <label class="field-label" for="filter">Acabado</label>
-          <select id="filter"><option value="enhanced">Documento mejorado</option><option value="original">Original</option><option value="grayscale">Escala de grises</option><option value="bw">Blanco y negro</option></select>
-          <p class="help" id="filter-help">Reduce sombras y equilibra el contraste.</p>
-          <div class="rotate-row"><button id="rotate" class="button secondary">↻ Girar 90°</button><span id="rotation-value">0°</span></div>
-          <div class="divider"></div><h3>Encuadre</h3><p class="help">Arrastra las esquinas sobre la foto o ajusta sus coordenadas. El giro se aplica después del recorte.</p>
+          <legend class="sr-only"><span data-i18n="tools.legend">Herramientas de página</span></legend>
+          <label class="field-label" for="filter"><span data-i18n="tools.finish">Acabado</span></label>
+          <select id="filter"><option value="enhanced" data-i18n="filters.enhanced">Documento mejorado</option><option value="original" data-i18n="filters.original">Original</option><option value="grayscale" data-i18n="filters.grayscale">Escala de grises</option><option value="bw" data-i18n="filters.bw">Blanco y negro</option></select>
+          <p class="help" id="filter-help"><span data-i18n="help.enhanced">Reduce sombras y equilibra el contraste.</span></p>
+          <div class="rotate-row"><button id="rotate" class="button secondary">↻ <span data-i18n="actions.rotate">Girar 90°</span></button><span id="rotation-value">0°</span></div>
+          <div class="divider"></div><h3><span data-i18n="view.crop">Encuadre</span></h3><p class="help"><span data-i18n="crop.help">Arrastra las esquinas sobre la foto o ajusta sus coordenadas. El giro se aplica después del recorte.</span></p>
           <div id="coordinate-fields" class="coordinates"></div>
-          <button id="full-frame" class="text-button">Usar imagen completa</button>
-          <button id="apply" class="button primary full">Aplicar ajustes</button>
-          <p id="dirty-note" class="help" hidden>Hay ajustes pendientes de aplicar.</p>
-          <div class="divider"></div><h3>Esta página</h3><div class="download-row"><button id="download-jpg" class="button secondary">↓ JPG</button><button id="download-pdf" class="button secondary">↓ PDF</button></div>
+          <button id="full-frame" class="text-button"><span data-i18n="actions.fullFrame">Usar imagen completa</span></button>
+          <button id="apply" class="button primary full"><span data-i18n="actions.apply">Aplicar ajustes</span></button>
+          <p id="dirty-note" class="help" hidden><span data-i18n="status.dirtyNote">Hay ajustes pendientes de aplicar.</span></p>
+          <div class="divider"></div><h3><span data-i18n="tools.thisPage">Esta página</span></h3><div class="download-row"><button id="download-jpg" class="button secondary">↓ JPG</button><button id="download-pdf" class="button secondary">↓ PDF</button></div>
         </fieldset>
-        <div class="divider"></div><div class="panel-heading"><h2>Documento completo</h2><span class="step">02 / EXPORTAR</span></div>
-        <label class="field-label" for="long-width">Anchura de imagen larga</label><select id="long-width"><option value="1200">1200 px · Ligera</option><option value="1600" selected>1600 px · Equilibrada</option><option value="2400">2400 px · Detallada</option></select>
-        <button id="export-pdf" class="button primary full" disabled>↓ Descargar PDF</button><button id="export-image" class="button secondary full" disabled>↓ Descargar imagen larga</button>
-        <p class="help">Se exportan las páginas aplicadas, en el orden de la lista. El PDF conserva una página por foto.</p>
+        <div class="divider"></div><div class="panel-heading"><h2><span data-i18n="export.title">Documento completo</span></h2><span class="step"><span data-i18n="export.step">02 / EXPORTAR</span></span></div>
+        <label class="field-label" for="long-width"><span data-i18n="export.width">Anchura de imagen larga</span></label><select id="long-width"><option value="1200" data-i18n="export.light">1200 px · Ligera</option><option value="1600" selected data-i18n="export.balanced">1600 px · Equilibrada</option><option value="2400" data-i18n="export.detailed">2400 px · Detallada</option></select>
+        <button id="export-pdf" class="button primary full" disabled>↓ <span data-i18n="actions.exportPdf">Descargar PDF</span></button><button id="export-image" class="button secondary full" disabled>↓ <span data-i18n="actions.exportImage">Descargar imagen larga</span></button>
+        <p class="help"><span data-i18n="export.help">Se exportan las páginas aplicadas, en el orden de la lista. El PDF conserva una página por foto.</span></p>
       </aside>
     </div>
-    <footer class="page-footer"><span>Un espacio local para tus documentos.</span><span id="connection-status">Comprobando servicio…</span></footer>
+    <footer class="page-footer"><span><span data-i18n="footer.local">Un espacio local para tus documentos.</span></span><span id="connection-status"><span data-i18n="connection.checking">Comprobando servicio…</span></span></footer>
   </main>
-  <div id="busy-indicator" role="status" hidden><span class="spinner"></span><span id="busy-text">Procesando…</span></div>
+  <div id="busy-indicator" role="status" hidden><span class="spinner"></span><span id="busy-text"><span data-i18n="busy.processing">Procesando…</span></span></div>
 </body>
 </html>

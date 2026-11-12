@@ -43,7 +43,9 @@ def long_image(files, width, settings, output):
             heights.append(max(1, math.ceil(image.height * width / image.width)))
     height = sum(heights)
     if width * height > settings.max_long_pixels or max(width, height) > settings.max_dimension:
-        raise too_large("La imagen larga supera el límite. Reduce su anchura o exporta a PDF.")
+        raise too_large(
+            "La imagen larga supera el límite. Reduce su anchura o exporta a PDF.", "errors.longImage"
+        )
     with Image.new("RGB", (width, height), "white") as combined:
         y = 0
         for uploaded, page_height in zip(files, heights, strict=True):

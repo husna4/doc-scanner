@@ -28,14 +28,20 @@ def decode(source: BinaryIO, settings: Settings) -> Image.Image:
             warnings.simplefilter("error", Image.DecompressionBombWarning)
             with Image.open(source) as image:
                 if image.format not in FORMATS:
-                    raise ScanError(415, "unsupported_format", "Usa JPEG, PNG, WebP o HEIC/HEIF.")
+                    raise ScanError(
+                        415, "unsupported_format", "Usa JPEG, PNG, WebP o HEIC/HEIF.", "errors.format"
+                    )
                 width, height = image.size
                 if width * height > settings.max_pixels or max(width, height) > settings.max_dimension:
-                    raise too_large("La imagen supera el límite de píxeles o dimensiones.")
+                    raise too_large(
+                        "La imagen supera el límite de píxeles o dimensiones.", "errors.imageDimensions"
+                    )
                 if min(width, height) < 32:
-                    raise invalid("La imagen debe medir al menos 32 × 32 píxeles.")
+                    raise invalid("La imagen debe medir al menos 32 × 32 píxeles.", "errors.imageSmall")
                 if getattr(image, "is_animated", False) or getattr(image, "n_frames", 1) > 1:
-                    raise invalid("Sube una imagen fija por página, sin animación ni secuencias.")
+                    raise invalid(
+                        "Sube una imagen fija por página, sin animación ni secuencias.", "errors.animation"
+                    )
                 oriented = ImageOps.exif_transpose(image)
                 if oriented.mode in ("RGBA", "LA") or "transparency" in oriented.info:
                     rgba = oriented.convert("RGBA")
@@ -45,11 +51,15 @@ def decode(source: BinaryIO, settings: Settings) -> Image.Image:
                 # No propagar EXIF/GPS al resultado.
                 return oriented.convert("RGB").copy()
     except (Image.DecompressionBombError, Image.DecompressionBombWarning):
-        raise too_large("La imagen supera el límite seguro de descompresión.") from None
+        raise too_large(
+            "La imagen supera el límite seguro de descompresión.", "errors.decompression"
+        ) from None
     except UnidentifiedImageError:
-        raise ScanError(415, "unsupported_format", "El contenido no es una imagen compatible.") from None
+        raise ScanError(
+            415, "unsupported_format", "El contenido no es una imagen compatible.", "errors.contentFormat"
+        ) from None
     except (OSError, ValueError, SyntaxError) as exc:
-        raise invalid("La imagen está dañada o no se puede decodificar.") from exc
+        raise invalid("La imagen está dañada o no se puede decodificar.", "errors.decode") from exc
 
 
 def normalized(points: np.ndarray, width: int, height: int) -> list[list[float]]:
@@ -162,7 +172,7 @@ def parse_corners(value: str | None) -> list[list[float]] | None:
         return points.tolist()
     except (ValueError, TypeError, json.JSONDecodeError):
         raise invalid(
-            "corners: cuatro puntos normalizados [x,y], convexos, en orden SI, SD, ID, II."
+            "corners: cuatro puntos normalizados [x,y], convexos, en orden SI, SD, ID, II.", "errors.corners"
         ) from None
 
 
@@ -172,9 +182,9 @@ def warp(image: Image.Image, corners: list[list[float]], settings: Settings) -> 
     width = max(round(float(np.linalg.norm(tr - tl))), round(float(np.linalg.norm(br - bl)))) + 1
     height = max(round(float(np.linalg.norm(bl - tl))), round(float(np.linalg.norm(br - tr)))) + 1
     if min(width, height) < 32:
-        raise invalid("El recorte debe medir al menos 32 × 32 píxeles.")
+        raise invalid("El recorte debe medir al menos 32 × 32 píxeles.", "errors.cropSmall")
     if width * height > settings.max_pixels or max(width, height) > settings.max_dimension:
-        raise too_large("El recorte supera las dimensiones permitidas.")
+        raise too_large("El recorte supera las dimensiones permitidas.", "errors.cropDimensions")
     target = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], np.float32)
     matrix = cv2.getPerspectiveTransform(points, target)
     result = cv2.warpPerspective(np.asarray(image), matrix, (width, height), flags=cv2.INTER_CUBIC)
