@@ -16,6 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=8.3,<10", "httpx>=0.28,<1", "pypdf>=6,<8", "psutil>=7,<9", "ruff>=0.14,<1"]
+browser = ["playwright>=1.56,<2"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

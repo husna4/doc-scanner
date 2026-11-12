@@ -1,6 +1,8 @@
 # DocScanner
 
-Microservicio independiente de escaneo: API REST, editor web en español y exportación JPEG/PDF. Python + FastAPI + OpenCV. Procesamiento local, sin cuentas, claves ni servicios externos.
+[English](README.en.md) · Español
+
+Microservicio independiente de escaneo: API REST, editor web en español e inglés y exportación JPEG/PDF. Python + FastAPI + OpenCV. Procesamiento local, sin cuentas, claves ni servicios externos.
 
 ## Instalación y arranque
 
@@ -44,6 +46,8 @@ Para detener: Ctrl+C. Para otro puerto: `.\scripts\start.ps1 -Port 8092`.
 Para seleccionar un intérprete: `.\scripts\install.ps1 -Python '3.12'`.
 
 ## Uso del editor
+
+El selector **Idioma** de la cabecera ofrece **Español** y **English**, sin recargar ni reprocesar fotos. Se usa primero la preferencia válida guardada (`es` o `en`), después el primer idioma compatible de `navigator.languages` (con `navigator.language` como alternativa) y, si ninguno coincide, inglés. Se reconocen variantes como `es-MX` o `en-GB`. La elección manual se guarda únicamente en `localStorage`, en `docscanner.language`. Si el almacenamiento está bloqueado, la elección se mantiene en memoria mientras la página siga abierta. El selector se deshabilita durante operaciones y al arrastrar esquinas. Swagger tiene su propia interfaz y queda fuera del selector.
 
 1. Añade fotos o arrástralas al área central. Se preparan en secuencia.
 2. Selecciona una página de la lista. La vista **Encuadre** muestra el original corregido por EXIF y cuatro esquinas editables con ratón, táctil o campos de porcentaje.
@@ -121,7 +125,7 @@ Si curl falla, el archivo de salida puede contener el JSON de error en lugar de 
 ### Errores
 
 ```json
-{"error":{"code":"limit_exceeded","message":"Un archivo supera el tamaño máximo permitido."}}
+{"error":{"code":"limit_exceeded","message":"Un archivo supera el tamaño máximo permitido.","message_key":"errors.fileSize"}}
 ```
 
 - `413`: tamaño, páginas, píxeles, dimensiones o resultado excedidos.
@@ -129,6 +133,8 @@ Si curl falla, el archivo de salida puede contener el JSON de error en lugar de 
 - `422`: imagen inválida, parámetros, esquinas o formulario incompleto.
 - `503`: servicio ocupado; `Retry-After: 2`. Reintentar de forma acotada.
 - `500`: error interno, sin incluir contenido de imagen ni traza en la respuesta.
+
+Los códigos HTTP, `error.code` y `error.message` conservan su contrato. Los campos opcionales `error.message_key` y `error.params` añaden metadatos seguros para traducir en el navegador. Los clientes existentes pueden ignorarlos. Los detalles de validación de Pydantic se mantienen en la API; el editor presenta un mensaje localizado de parámetros inválidos. No se envía ningún idioma al servidor.
 
 ## Configuración
 
@@ -155,7 +161,7 @@ Cada lote se decodifica por páginas. La imagen larga necesita un lienzo complet
 
 - Sin base de datos ni IDs persistentes. El servidor no mantiene imágenes entre peticiones.
 - Los archivos pequeños se procesan en memoria. Los mayores pueden volcarse a temporales propios en `.runtime/uploads`, con borrado al cerrar, también ante errores o desconexión. El arranque limpia restos propios de más de 24 h sin recorrer otras carpetas.
-- El navegador mantiene originales y resultados en memoria, sin localStorage/IndexedDB. Se liberan URLs de blobs al reemplazar/eliminar páginas. Cerrar o recargar pierde el documento; descárgalo primero.
+- El navegador mantiene originales y resultados solamente en memoria, sin guardarlos en localStorage/IndexedDB. `localStorage` guarda únicamente la preferencia de idioma (`docscanner.language`: `es` o `en`). Se liberan URLs de blobs al reemplazar/eliminar páginas. Cerrar o recargar pierde el documento; descárgalo primero.
 - Las descargas solicitadas son archivos persistentes elegidos por el usuario. El navegador controla su carpeta de destino.
 - Respuestas `Cache-Control: no-store`; no se registran contenido de imágenes ni nombres de archivo en errores. No se copian EXIF/GPS a JPEG/PDF exportados.
 - Por defecto escucha en `127.0.0.1` y no incorpora autenticación.
@@ -173,6 +179,25 @@ Cada lote se decodifica por páginas. La imagen larga necesita un lienzo complet
 Fixtures versionadas en `tests/fixtures`: documento inclinado, sombras, fondo complejo, imagen sin documento y página de referencia. `corners.json` contiene sus esquinas conocidas. No incluyen datos personales.
 
 La suite verifica solapamiento del recorte >90 % y error máximo <25 px en las tres fotos de referencia, perspectiva manual, ocho orientaciones EXIF, transparencia, HEIC, filtros, giro, contrato API, orden/orientación PDF, apilado JPEG, tipos falsos, archivos corruptos, límites, peticiones chunked, saturación y limpieza tras éxito/error.
+
+Las pruebas de catálogos y de compatibilidad de errores se incluyen en la suite habitual. Para ejecutar también el editor en Chromium real, instala el grupo opcional de desarrollo y el navegador (requieren Internet la primera vez):
+
+```powershell
+$env:UV_CACHE_DIR = Join-Path $PWD '.cache\uv'
+uv sync --locked --group browser --no-install-project
+.\.venv\Scripts\python.exe -m playwright install chromium
+.\scripts\test.ps1 --editor
+# Solo las pruebas del navegador:
+.\.venv\Scripts\python.exe -m pytest tests/browser --editor
+```
+
+Playwright no es necesario para instalar ni arrancar la app y no se instala en la imagen Docker. Sin `--editor`, las pruebas de navegador se omiten explícitamente. Arrancan su propio servicio en un puerto local libre y comprueban ambos idiomas, conservación de datos y bloqueos, avisos, almacenamiento bloqueado, operaciones completas, ausencia de peticiones externas y errores JavaScript. Las capturas de escritorio (1440 px) y móvil (375 px), con campos de coordenadas visibles, se guardan en `.runtime/pytest/browser*/editor-*.png` para revisión visual. Estas pruebas usan Chromium; no cubren otros motores ni dispositivos físicos.
+
+## Traducciones
+
+`scanner/static/i18n.js` carga los catálogos locales `locales/es.json` y `locales/en.json` antes del editor. `t(key, params)` interpola parámetros con nombre y usa inglés si falta una clave en el idioma activo. Los textos estáticos usan `data-i18n` en elementos de texto; los atributos permitidos son `data-i18n-title`, `data-i18n-alt` y `data-i18n-aria-label`. No marques contenedores con controles o iconos: marca un `span` de texto para conservar sus hijos.
+
+Para añadir un mensaje, incluye la misma clave semántica y los mismos parámetros en ambos JSON. Guarda los estados y avisos como claves con datos, sin frases ya traducidas. Para añadir otro idioma, copia el catálogo inglés, traduce sus valores sin cambiar claves ni parámetros, registra el código en `i18n.js` (carga, resolución y selección), añade su opción accesible en la cabecera y amplía las pruebas de catálogos, resolución y navegador. Las claves nuevas de errores deben añadirse también en sus puntos de origen del servidor; utiliza únicamente parámetros seguros. No traduzcas valores multipart, nombres de archivo, rutas ni nombres de descarga.
 
 ## Organización
 

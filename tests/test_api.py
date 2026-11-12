@@ -68,7 +68,7 @@ def test_auto_scan_crops_shadowed_receipt_on_colored_background(client):
     photo = (np.array([215, 160, 109]) * light[:, :, None]).astype(np.uint8)
     mask = Image.new("L", (480, 600))
     ImageDraw.Draw(mask).polygon([(130, 95), (337, 88), (352, 531), (118, 541)], fill=255)
-    paper = (161 + 0.09 * (x - 220) - 29 * np.exp(-((y - 390) / 35) ** 2)).astype(np.uint8)
+    paper = (161 + 0.09 * (x - 220) - 29 * np.exp(-(((y - 390) / 35) ** 2))).astype(np.uint8)
     inside = np.asarray(mask) > 0
     photo[inside] = paper[inside, None]
     data = io.BytesIO()
@@ -261,6 +261,11 @@ def test_chunked_limit_without_content_length(tmp_path):
                     "/api/scan", content=body(), headers={"Content-Type": "multipart/form-data; boundary=abc"}
                 )
                 assert response.status_code == 413
+                assert response.json()["error"] == {
+                    "code": "limit_exceeded",
+                    "message": "La petición supera el tamaño máximo permitido.",
+                    "message_key": "errors.requestSize",
+                }
                 assert not list(app.state.temp_dir.iterdir())
 
     asyncio.run(exercise())
@@ -296,6 +301,11 @@ def test_busy_response_and_health_remains_responsive(tmp_path, monkeypatch):
                     assert started.is_set()
                     second = await client.post("/api/detect", files={"file": ("b.png", image_bytes())})
                     assert second.status_code == 503 and second.headers["Retry-After"] == "2"
+                    assert second.json()["error"] == {
+                        "code": "busy",
+                        "message": "El escáner está ocupado. Reintenta en unos segundos.",
+                        "message_key": "errors.busy",
+                    }
                     assert (await client.get("/health")).status_code == 200
                 finally:
                     release.set()

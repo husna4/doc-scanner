@@ -37,7 +37,20 @@ ERRORS = {
                     "properties": {
                         "error": {
                             "type": "object",
-                            "properties": {"code": {"type": "string"}, "message": {"type": "string"}},
+                            "required": ["code", "message"],
+                            "properties": {
+                                "code": {"type": "string"},
+                                "message": {"type": "string"},
+                                "message_key": {
+                                    "type": "string",
+                                    "description": "Optional editor translation key",
+                                },
+                                "params": {
+                                    "type": "object",
+                                    "description": "Optional safe named translation parameters",
+                                    "additionalProperties": {"type": ["string", "number"]},
+                                },
+                            },
                         }
                     },
                 }
@@ -49,6 +62,7 @@ ERRORS = {
         (415, "Formato no compatible"),
         (422, "Imagen o parámetros inválidos"),
         (503, "Servicio ocupado"),
+        (500, "Error interno"),
     ]
 }
 
@@ -113,14 +127,14 @@ def parameters(form, model, file_field):
     for key, value in form.multi_items():
         if key != file_field:
             if key in values:
-                raise invalid(f"El campo '{key}' está repetido.")
+                raise invalid(f"El campo '{key}' está repetido.", "errors.repeatedField")
             values[key] = value
     try:
         return model.model_validate(values)
     except ValidationError as exc:
         # No devolver inputs ni nombres de archivos del usuario en los errores.
         details = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
-        raise invalid(details) from None
+        raise invalid(details, "errors.parameters") from None
 
 
 class OutputBuffer(SpooledTemporaryFile):
@@ -132,7 +146,9 @@ class OutputBuffer(SpooledTemporaryFile):
 
     def write(self, data):
         if self.tell() + len(data) > self.limit:
-            raise too_large("El resultado supera el límite de bytes. Divide el documento.")
+            raise too_large(
+                "El resultado supera el límite de bytes. Divide el documento.", "errors.outputSize"
+            )
         return super().write(data)
 
 
@@ -188,12 +204,14 @@ def create_app(settings: Settings | None = None, temp_dir: Path | None = None):
 
     @application.exception_handler(RequestValidationError)
     async def validation_error(request, error):
-        return error_response(invalid("Los parámetros de la petición no son válidos."))
+        return error_response(invalid("Los parámetros de la petición no son válidos.", "errors.parameters"))
 
     @application.exception_handler(Exception)
     async def unexpected_error(request, error):
         logger.error("Fallo interno del escáner (%s)", type(error).__name__)
-        return error_response(ScanError(500, "internal_error", "No se pudo procesar la imagen."))
+        return error_response(
+            ScanError(500, "internal_error", "No se pudo procesar la imagen.", "errors.internal")
+        )
 
     @application.get("/", include_in_schema=False)
     async def index():
@@ -238,7 +256,7 @@ def create_app(settings: Settings | None = None, temp_dir: Path | None = None):
     async def detect_endpoint(request: Request):
         async with image_form(request, settings, directory) as (form, files):
             if any(key != "file" for key in form):
-                raise invalid("/api/detect solo admite el campo file.")
+                raise invalid("/api/detect solo admite el campo file.", "errors.detectFields")
 
             def work():
                 with decode(files[0].file, settings) as image:
@@ -315,7 +333,7 @@ def create_app(settings: Settings | None = None, temp_dir: Path | None = None):
         async with image_form(request, settings, directory, field="files", multiple=True) as (form, files):
             if kind == "pdf":
                 if any(key != "files" for key in form):
-                    raise invalid("La exportación PDF solo admite el campo files.")
+                    raise invalid("La exportación PDF solo admite el campo files.", "errors.pdfFields")
                 width = None
             else:
                 width = parameters(form, ImageOptions, "files").width

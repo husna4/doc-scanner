@@ -6,7 +6,12 @@ from scanner.errors import ScanError, too_large
 
 
 def error_response(error):
-    return JSONResponse({"error": {"code": error.code, "message": error.message}}, status_code=error.status)
+    body = {"code": error.code, "message": error.message}
+    if error.message_key is not None:
+        body["message_key"] = error.message_key
+    if error.params is not None:
+        body["params"] = error.params
+    return JSONResponse({"error": body}, status_code=error.status)
 
 
 class ResourceGuard:
@@ -39,7 +44,7 @@ class ResourceGuard:
         # El incremento ocurre sin await: adquisición atómica dentro del event loop único.
         if self.active >= self.settings.max_concurrency:
             response = error_response(
-                ScanError(503, "busy", "El escáner está ocupado. Reintenta en unos segundos.")
+                ScanError(503, "busy", "El escáner está ocupado. Reintenta en unos segundos.", "errors.busy")
             )
             response.headers["Retry-After"] = "2"
             return await response(scope, receive, secure_send)
@@ -52,7 +57,7 @@ class ResourceGuard:
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
                 if received > self.settings.max_request_bytes:
-                    raise too_large("La petición supera el tamaño máximo permitido.")
+                    raise too_large("La petición supera el tamaño máximo permitido.", "errors.requestSize")
             return message
 
         try:
@@ -63,9 +68,11 @@ class ResourceGuard:
                     if length < 0:
                         raise ValueError
                 except ValueError:
-                    raise ScanError(422, "invalid_length", "Content-Length no válido.") from None
+                    raise ScanError(
+                        422, "invalid_length", "Content-Length no válido.", "errors.contentLength"
+                    ) from None
                 if length > self.settings.max_request_bytes:
-                    raise too_large("La petición supera el tamaño máximo permitido.")
+                    raise too_large("La petición supera el tamaño máximo permitido.", "errors.requestSize")
             await self.app(scope, limited_receive, secure_send)
         except ScanError as error:
             if started:

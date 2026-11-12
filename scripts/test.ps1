@@ -3,9 +3,9 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 try {
     $pythonExe = Join-Path $projectRoot '.venv\Scripts\python.exe'
-    if (-not (Test-Path -LiteralPath $pythonExe)) { throw 'Primero ejecuta .\scripts\install.ps1' }
+    if (-not (Test-Path -LiteralPath $pythonExe)) { throw 'Primero ejecuta / First run .\scripts\install.ps1' }
     & $pythonExe -m pytest --basetemp=.runtime/pytest @args
-    if ($LASTEXITCODE -ne 0) { throw 'Hay tests fallidos.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Hay tests fallidos. / Some tests failed.' }
     & $pythonExe -m ruff check scanner tests scripts/benchmark.py
-    if ($LASTEXITCODE -ne 0) { throw 'Hay problemas de análisis estático.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Hay problemas de análisis estático. / Static analysis found issues.' }
 } finally { Pop-Location }

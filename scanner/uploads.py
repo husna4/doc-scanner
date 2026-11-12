@@ -37,7 +37,7 @@ class LimitedParser(MultiPartParser):
 
     def check_headers(self):
         if self.header_bytes > 16384:
-            raise too_large("Las cabeceras multipart son demasiado grandes.")
+            raise too_large("Las cabeceras multipart son demasiado grandes.", "errors.multipartHeaders")
 
     def on_headers_finished(self):
         super().on_headers_finished()
@@ -51,7 +51,7 @@ class LimitedParser(MultiPartParser):
     def on_part_data(self, data, start, end):
         self.part_bytes += end - start
         if self._current_part.file and self.part_bytes > self.settings.max_file_bytes:
-            raise too_large("Un archivo supera el tamaño máximo permitido.")
+            raise too_large("Un archivo supera el tamaño máximo permitido.", "errors.fileSize")
         super().on_part_data(data, start, end)
 
     def on_end(self):
@@ -61,7 +61,12 @@ class LimitedParser(MultiPartParser):
 @asynccontextmanager
 async def image_form(request, settings, directory, field="file", multiple=False):
     if request.headers.get("content-type", "").split(";")[0].lower() != "multipart/form-data":
-        raise ScanError(415, "multipart_required", "Envía las imágenes como multipart/form-data.")
+        raise ScanError(
+            415,
+            "multipart_required",
+            "Envía las imágenes como multipart/form-data.",
+            "errors.multipartRequired",
+        )
     parser = LimitedParser(request, settings, directory, settings.max_pages if multiple else 1)
     form = None
     try:
@@ -69,17 +74,23 @@ async def image_form(request, settings, directory, field="file", multiple=False)
             form = await parser.parse()
         except MultiPartException as exc:
             if "Too many" in exc.message or "exceeded" in exc.message:
-                raise too_large("Demasiados archivos/campos o un campo supera el límite.") from exc
-            raise invalid("El formulario multipart no es válido.") from exc
+                raise too_large(
+                    "Demasiados archivos/campos o un campo supera el límite.", "errors.multipartLimit"
+                ) from exc
+            raise invalid("El formulario multipart no es válido.", "errors.multipartInvalid") from exc
         if not parser.finished:
-            raise invalid("La subida está incompleta.")
+            raise invalid("La subida está incompleta.", "errors.uploadIncomplete")
         files = form.getlist(field)
         if not files or any(not isinstance(item, UploadFile) for item in files):
-            raise invalid(f"Incluye al menos una imagen en el campo '{field}'.")
+            raise invalid(
+                f"Incluye al menos una imagen en el campo '{field}'.", "errors.missingFile", {"field": field}
+            )
         if any(isinstance(value, UploadFile) and key != field for key, value in form.multi_items()):
-            raise invalid(f"Todos los archivos deben utilizar el campo '{field}'.")
+            raise invalid(
+                f"Todos los archivos deben utilizar el campo '{field}'.", "errors.fileField", {"field": field}
+            )
         if any(item.size == 0 for item in files):
-            raise invalid("No se aceptan archivos vacíos.")
+            raise invalid("No se aceptan archivos vacíos.", "errors.emptyFile")
         yield form, files
     finally:
         if form is not None:
